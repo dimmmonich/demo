@@ -8,13 +8,18 @@ exports.handler = async (event) => {
         // Повертаємо успішну відповідь
         return {
             statusCode: 200,
-            message: 'Hello from Lambda',
+            body: {
+                message: 'Hello from Lambda'
+            },
         };
     } else {
         // Повертаємо помилку 400 Bad Request для будь-якого іншого шляху або методу
         return {
             statusCode: 400,
-            message: `Bad request syntax or unsupported method. Request path: ${requestPath}. HTTP method: ${httpMethod}`,
+            body: {
+                message: `Bad request syntax or unsupported method. Request path: ${requestPath}. HTTP method: ${httpMethod}`,
+            },
         };
     }
 };
+
