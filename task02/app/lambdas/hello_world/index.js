@@ -1,17 +1,19 @@
 exports.handler = async (event) => {
-    // Extract the request path and HTTP method from the event object
-    const requestPath = event.path;
-    const httpMethod = event.httpMethod;
+    // Отримуємо шлях та метод з об'єкта event
+    const requestPath = event.rawPath;
+    const httpMethod = event.requestContext.http.method;
 
-    // Check if the request path is '/hello'
+    // Перевіряємо, чи є шлях '/hello'
     if (requestPath === '/hello' && httpMethod === 'GET') {
-        // Return the success response
+        // Повертаємо успішну відповідь
         return {
             statusCode: 200,
-            message: 'Hello from Lambda',
+            body: JSON.stringify({
+                message: 'Hello from Lambda!'
+            }),
         };
     } else {
-        // Return the 400 Bad Request response for any other path or method
+        // Повертаємо помилку 400 Bad Request для будь-якого іншого шляху або методу
         return {
             statusCode: 400,
             body: JSON.stringify({
@@ -20,3 +22,4 @@ exports.handler = async (event) => {
         };
     }
 };
+
