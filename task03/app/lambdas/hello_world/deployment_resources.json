@@ -1,4 +1,23 @@
 {
+  "task3_api": {
+    "resource_type": "api_gateway",
+    "deploy_stage": "api",
+    "resources": {
+      "/hello": {
+        "GET": {
+          "authorization_type": "NONE",
+          "request": {},
+          "response": {
+            "statusCode": 200,
+            "message": "Hello from Lambda"
+          },
+          "integration_type": "lambda_proxy",
+          "Lambda_name": "hello_world"
+        }
+      }
+    },
+    "minimum_compression_size": 0
+  },
   "hello_world-role": {
     "predefined_policies": [],
     "principal_service": "lambda",
