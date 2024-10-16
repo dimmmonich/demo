@@ -12,7 +12,7 @@
             "message": "Hello from Lambda"
           },
           "integration_type": "lambda",
-          "Lambda_name": "hello_world"
+          "lambda_name": "hello_world"
         }
       }
     },
