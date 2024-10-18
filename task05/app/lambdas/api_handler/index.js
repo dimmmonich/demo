@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 exports.handler = async (event) => {
     try {
         const requestBody = JSON.parse(event.body);
-        const { principalId, content } = event;
+        const { principalId, content } = requestBody;
 
         const newEvent = {
             id: uuidv4(),
