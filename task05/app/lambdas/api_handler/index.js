@@ -3,23 +3,24 @@ const dynamo = new AWS.DynamoDB.DocumentClient();
 const { v4: uuidv4 } = require('uuid');
 
 exports.handler = async (event) => {
-    const requestBody = JSON.parse(event.body);
-    const { principalId, content } = requestBody;
-
-    const newEvent = {
-        id: uuidv4(),
-        principalId: principalId,
-        createdAt: new Date().toISOString(),
-        body: content
-    };
-
-    const params = {
-        TableName: 'Events',
-        Item: newEvent
-    };
-
     try {
+        const requestBody = JSON.parse(event.body);
+        const { principalId, content } = requestBody;
+
+        const newEvent = {
+            id: uuidv4(),
+            principalId: principalId,
+            createdAt: new Date().toISOString(),
+            body: content
+        };
+
+        const params = {
+            TableName: 'cmtr-d49b0e2c-Events-test',
+            Item: newEvent
+        };
+
         await dynamo.put(params).promise();
+
         return {
             statusCode: 201,
             body: JSON.stringify({ event: newEvent })
@@ -27,7 +28,7 @@ exports.handler = async (event) => {
     } catch (error) {
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: 'Could not create event' })
+            body: JSON.stringify({ error: 'Could not create event', message: error.message })
         };
     }
 };
