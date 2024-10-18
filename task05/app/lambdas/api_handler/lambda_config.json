@@ -3,7 +3,7 @@
   "name": "api_handler",
   "func_name": "lambdas/api_handler/index.handler",
   "resource_type": "lambda",
-  "iam_role_name": "api_handler-role",
+  "iam_role_name": "api_handler_role",
   "runtime": "nodejs20.x",
   "memory": 128,
   "timeout": 100,
