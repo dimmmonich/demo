@@ -22,12 +22,12 @@ exports.handler = async (event) => {
         await dynamo.put(params).promise();
         return {
             statusCode: 201,
-            event: newEvent
+            body: JSON.stringify({ event: newEvent })
         };
     } catch (error) {
         return {
             statusCode: 500,
-            error: 'Could not create event'
+            body: JSON.stringify({ error: 'Could not create event' })
         };
     }
 };
