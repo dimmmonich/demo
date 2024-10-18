@@ -36,7 +36,7 @@
           "request": {},
           "response": {
             "statusCode": 201,
-            "event": {}
+            "message": "Event created successfully"
           },
           "integration_type": "lambda",
           "lambda_name": "api_handler"
