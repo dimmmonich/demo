@@ -1,11 +1,46 @@
 {
-  "api_handler-role": {
+  "task5_api": {
+    "resource_type": "api_gateway",
+    "deploy_stage": "api",
+    "resources": {
+      "/events": {
+        "POST": {
+          "authorization_type": "NONE",
+          "request": {},
+          "response": {
+            "statusCode": 201,
+            "message": "Event created successfully"
+          },
+          "integration_type": "lambda",
+          "lambda_name": "api_handler"
+        }
+      }
+    },
+    "minimum_compression_size": 0
+  },
+  "api_handler_role": {
     "predefined_policies": [],
     "principal_service": "lambda",
-    "custom_policies": [
-      "lambda-basic-execution"
-    ],
+    "custom_policies": ["PutObjectToDynamoPolicy", "lambda-basic-execution"],
     "resource_type": "iam_role",
+    "tags": {}
+  },
+  "PutObjectToDynamoPolicy": {
+    "resource_type": "iam_policy",
+    "policy_content": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "dynamodb:GetItem",
+            "dynamodb:Query",
+            "dynamodb:PutItem"
+          ],
+          "Resource": "*"
+        }
+      ]
+    },
     "tags": {}
   }
 }

@@ -15,7 +15,7 @@ exports.handler = async (event) => {
         };
 
         const params = {
-            TableName: 'cmtr-d49b0e2c-Events-test',
+            TableName: 'cmtr-d49b0e2c-Events',
             Item: newEvent
         };
 

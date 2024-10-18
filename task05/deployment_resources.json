@@ -25,29 +25,7 @@
     "resource_type": "iam_policy",
     "tags": {}
   },
-  "task5_api": {
-    "resource_type": "api_gateway",
-    "deploy_stage": "api",
-    "dependencies": [],
-    "resources": {
-      "/events": {
-        "POST": {
-          "authorization_type": "NONE",
-          "request": {},
-          "response": {
-            "statusCode": 201,
-            "message": "Event created successfully"
-          },
-          "integration_type": "lambda",
-          "lambda_name": "api_handler"
-        }
-      }
-    },
-    "minimum_compression_size": 0,
-    "tags": {}
-  },
-
-  "cmtr-d49b0e2c-Events-test": {
+  "cmtr-d49b0e2c-Events": {
     "resource_type": "dynamodb_table",
     "hash_key_name": "id",
     "hash_key_type": "S",
