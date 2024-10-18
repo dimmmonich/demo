@@ -18,7 +18,7 @@
     },
     "minimum_compression_size": 0
   },
-  "api_handler_role": {
+  "api_handler": {
     "predefined_policies": [],
     "principal_service": "lambda",
     "custom_policies": ["PutObjectToDynamoPolicy", "lambda-basic-execution"],
