@@ -57,7 +57,7 @@
       "id": "S",
       "principalId": "N",
       "createdAt": "S",
-      "body": "S"
+      "body": "M"
     },
     "key_schema": {
       "id": "HASH"
