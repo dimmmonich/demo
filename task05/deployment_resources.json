@@ -46,6 +46,7 @@
     "minimum_compression_size": 0,
     "tags": {}
   },
+
   "Events": {
     "resource_type": "dynamodb_table",
     "hash_key_name": "id",
@@ -64,4 +65,5 @@
     "region": "eu-central-1",
     "tags": {}
   }
+
 }
