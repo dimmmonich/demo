@@ -24,24 +24,6 @@
     },
     "resource_type": "iam_policy",
     "tags": {}
-  },
-  "cmtr-d49b0e2c-Events": {
-    "resource_type": "dynamodb_table",
-    "hash_key_name": "id",
-    "hash_key_type": "S",
-    "read_capacity": 5,
-    "write_capacity": 5,
-    "attributes": {
-      "id": "S",
-      "principalId": "N",
-      "createdAt": "S",
-      "body": "M"
-    },
-    "key_schema": {
-      "id": "HASH"
-    },
-    "region": "eu-central-1",
-    "tags": {}
   }
 }
 
