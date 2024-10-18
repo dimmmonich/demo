@@ -1,0 +1,67 @@
+{
+  "lambda-basic-execution": {
+    "policy_content": {
+      "Statement": [
+        {
+          "Action": [
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+            "dynamodb:GetItem",
+            "dynamodb:Query",
+            "dynamodb:PutItem",
+            "dynamodb:Batch*",
+            "dynamodb:DeleteItem",
+            "ssm:PutParameter",
+            "ssm:GetParameter",
+            "kms:Decrypt"
+          ],
+          "Effect": "Allow",
+          "Resource": "*"
+        }
+      ],
+      "Version": "2012-10-17"
+    },
+    "resource_type": "iam_policy",
+    "tags": {}
+  },
+  "task5_api": {
+    "resource_type": "api_gateway",
+    "deploy_stage": "api",
+    "dependencies": [],
+    "resources": {
+      "/events": {
+        "POST": {
+          "authorization_type": "NONE",
+          "request": {},
+          "response": {
+            "statusCode": 201,
+            "event": {}
+          },
+          "integration_type": "lambda",
+          "lambda_name": "api_handler"
+        }
+      }
+    },
+    "minimum_compression_size": 0,
+    "tags": {}
+  },
+  "Events": {
+    "resource_type": "dynamodb_table",
+    "hash_key_name": "id",
+    "hash_key_type": "S",
+    "read_capacity": 5,
+    "write_capacity": 5,
+    "attributes": {
+      "id": "S",
+      "principalId": "N",
+      "createdAt": "S",
+      "body": "S"
+    },
+    "key_schema": {
+      "id": "HASH"
+    },
+    "region": "eu-central-1",
+    "tags": {}
+  }
+}
