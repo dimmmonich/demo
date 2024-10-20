@@ -31,7 +31,7 @@ exports.handler = async (event) => {
             // Write the audit entry to the Audit table
             try {
                 await dynamoDB.put({
-                    TableName: "cmtr-d49b0e2c-Audit",
+                    TableName: "cmtr-d49b0e2c-Audit-test",
                     Item: {
                         // Ensure that the structure matches the expected format
                         id: auditEntry.id,
