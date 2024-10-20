@@ -16,11 +16,15 @@
             "dynamodb:DeleteItem",
             "ssm:PutParameter",
             "ssm:GetParameter",
-            "kms:Decrypt"
+            "kms:Decrypt",
+            "dynamodb:GetRecords",
+            "dynamodb:GetShardIterator",
+            "dynamodb:DescribeStream",
+            "dynamodb:ListStreams"
           ],
           "Effect": "Allow",
           "Resource": [
-            "arn:aws:dynamodb:eu-central-1:196241772369:table/cmtr-d49b0e2c-Configuration",
+            "arn:aws:dynamodb:eu-central-1:196241772369:table/cmtr-d49b0e2c-Configuration-test/stream/*",
             "arn:aws:dynamodb:eu-central-1:196241772369:table/cmtr-d49b0e2c-Audit",
             "arn:aws:logs:*:*:*"
           ]
