@@ -20,8 +20,8 @@
           ],
           "Effect": "Allow",
           "Resource": [
-            "arn:aws:dynamodb:eu-central-1:196241772369:table/cmtr-d49b0e2c-Configuration-test",
-            "arn:aws:dynamodb:eu-central-1:196241772369:table/cmtr-d49b0e2c-Audit-test",
+            "arn:aws:dynamodb:eu-central-1:196241772369:table/cmtr-d49b0e2c-Configuration",
+            "arn:aws:dynamodb:eu-central-1:196241772369:table/cmtr-d49b0e2c-Audit",
             "arn:aws:logs:*:*:*"
           ]
         }
