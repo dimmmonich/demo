@@ -6,6 +6,8 @@
           "Action": [
             "logs:CreateLogGroup",
             "logs:CreateLogStream",
+            "logs:DescribeLogStreams",
+            "logs:GetLogEvents",
             "logs:PutLogEvents",
             "dynamodb:GetItem",
             "dynamodb:Query",
