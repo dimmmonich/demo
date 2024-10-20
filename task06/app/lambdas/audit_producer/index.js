@@ -3,34 +3,47 @@ const { v4: uuidv4 } = require('uuid');
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
-    for (const record of event.Records) {
-        const { eventName, dynamodb } = record;
+    console.log("Received DynamoDB event:", JSON.stringify(event, null, 2));
 
-        if (eventName === 'INSERT' || eventName === 'MODIFY') {
-            const newValue = dynamodb.NewImage;
-            const key = newValue.key.S;  // Ім'я ключа конфігураційного елемента
-            const value = parseInt(newValue.value.N, 10);  // Нове значення
+    for (const record of event.Records) {
+        // Check if the event is an INSERT or MODIFY event
+        if (record.eventName === 'INSERT' || record.eventName === 'MODIFY') {
+            // Extract new image from the record
+            const newImage = record.dynamodb.NewImage;
 
             const auditEntry = {
-                id: uuidv4(),  // Генеруємо унікальний ID для аудиторського запису
-                itemKey: key,
-                modificationTime: new Date().toISOString(),  // Час модифікації
-                newValue: { key, value }  // Нове значення
+                id: uuidv4(), // Generate a UUID for the audit entry
+                itemKey: newImage.key.S, // Assuming 'key' is the primary key in Configuration
+                modificationTime: new Date().toISOString(), // Current time in ISO format
+                newValue: {
+                    key: newImage.key.S,
+                    value: parseInt(newImage.value.N, 10) // Convert string to int
+                }
             };
 
-            // Логіка для події MODIFY
-            if (eventName === 'MODIFY') {
-                const oldValue = parseInt(dynamodb.OldImage.value.N, 10);  // Старе значення
-                auditEntry.updatedAttribute = "value";  // Поле, яке було змінене
-                auditEntry.oldValue = oldValue;  // Старе значення
-                auditEntry.newValue = value;  // Нове значення
+            // If the event is an UPDATE, include the old value
+            if (record.eventName === 'MODIFY') {
+                const oldImage = record.dynamodb.OldImage;
+                auditEntry.oldValue = parseInt(oldImage.value.N, 10);
+                auditEntry.updatedAttribute = 'value'; // Indicate what attribute was updated
             }
 
-            // Записуємо аудиторський запис в таблицю Audit
-            await dynamoDB.put({
-                TableName: 'cmtr-d49b0e2c-Audit-test',  // Замінити на правильну назву таблиці
-                Item: auditEntry
-            }).promise();
+            // Write the audit entry to the Audit table
+            try {
+                await dynamoDB.put({
+                    TableName: "cmtr-d49b0e2c-Audit",
+                    Item: {
+                        // Ensure that the structure matches the expected format
+                        id: auditEntry.id,
+                        itemKey: auditEntry.itemKey,
+                        modificationTime: auditEntry.modificationTime,
+                        newValue: auditEntry.newValue
+                    }
+                }).promise();
+                console.log("Audit entry created:", JSON.stringify(auditEntry, null, 2));
+            } catch (error) {
+                console.error("Failed to write to Audit table:", error);
+            }
         }
     }
 };
