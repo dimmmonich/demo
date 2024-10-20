@@ -31,13 +31,13 @@ exports.handler = async (event) => {
             // Write the audit entry to the Audit table
             try {
                 await dynamoDB.put({
-                    TableName: "cmtr-d49b0e2c-Audit-test",
+                    TableName: "cmtr-d49b0e2c-Audit",
                     Item: {
-                        // Ensure that the structure matches the expected format
+                        // Ensure the structure matches the expected format
                         id: auditEntry.id,
                         itemKey: auditEntry.itemKey,
                         modificationTime: auditEntry.modificationTime,
-                        newValue: auditEntry.newValue
+                        newValue: auditEntry.newValue,
                     }
                 }).promise();
                 console.log("Audit entry created:", JSON.stringify(auditEntry, null, 2));
