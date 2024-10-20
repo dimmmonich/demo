@@ -28,7 +28,7 @@ exports.handler = async (event) => {
 
             // Записуємо аудиторський запис в таблицю Audit
             await dynamoDB.put({
-                TableName: 'cmtr-d49b0e2c-Audit',  // Замінити на правильну назву таблиці
+                TableName: 'cmtr-d49b0e2c-Audit-test',  // Замінити на правильну назву таблиці
                 Item: auditEntry
             }).promise();
         }
