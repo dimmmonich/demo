@@ -4,13 +4,11 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
     console.log("Received event:", JSON.stringify(event, null, 2));
-
     for (const record of event.Records) {
         // Переконайтеся, що це вставка або зміна
         if (record.eventName === 'INSERT' || record.eventName === 'MODIFY') {
             // Отримуємо новий образ
             const newImage = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage);
-
             // Формуємо об'єкт для запису в таблицю Audit
             const auditEntry = {
                 id: uuidv4(), // Генеруємо UUID
@@ -22,9 +20,16 @@ exports.handler = async (event) => {
                 }
             };
 
+            // Додати оновлене значення, якщо подія це зміна
+            if (record.eventName === 'MODIFY') {
+                const oldImage = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.OldImage);
+                auditEntry.updatedAttribute = "value";
+                auditEntry.oldValue = oldImage.value;
+                auditEntry.newValue = newImage.value;
+            }
+
             // Логування для перевірки
             console.log("Audit entry constructed:", JSON.stringify(auditEntry, null, 2));
-
             // Записуємо в таблицю Audit
             const params = {
                 TableName: 'cmtr-d49b0e2c-Audit-test',
