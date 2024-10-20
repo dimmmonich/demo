@@ -1,41 +1,33 @@
 const AWS = require('aws-sdk');
-const dynamo = new AWS.DynamoDB.DocumentClient();
 const { v4: uuidv4 } = require('uuid');
-
-const auditTableName = process.env.target_table || 'Audit';
+const dynamoDB = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
-    const records = event.Records;
+    for (const record of event.Records) {
+        const { eventName, dynamodb } = record;
 
-    for (let record of records) {
-        if (record.eventName === 'INSERT' || record.eventName === 'MODIFY') {
-            const newImage = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage);
-            const oldImage = record.eventName === 'MODIFY' ? AWS.DynamoDB.Converter.unmarshall(record.dynamodb.OldImage) : null;
+        if (eventName === 'INSERT' || eventName === 'MODIFY') {
+            const newValue = dynamodb.NewImage;
+            const key = newValue.key.S;
+            const value = newValue.value.N;
 
             const auditEntry = {
                 id: uuidv4(),
-                itemKey: newImage.key,
+                itemKey: key,
                 modificationTime: new Date().toISOString(),
-                newValue: newImage
+                newValue: { key, value }
             };
 
-            if (oldImage) {
+            if (eventName === 'MODIFY') {
+                const oldValue = dynamodb.OldImage.value.N;
                 auditEntry.updatedAttribute = "value";
-                auditEntry.oldValue = oldImage.value;
-                auditEntry.newValue = newImage.value;
+                auditEntry.oldValue = oldValue;
             }
 
-            const params = {
-                TableName: auditTableName,
+            await dynamoDB.put({
+                TableName: 'cmtr-d49b0e2c-Audit-test',
                 Item: auditEntry
-            };
-
-            await dynamo.put(params).promise();
+            }).promise();
         }
     }
-
-    return {
-        statusCode: 200,
-        body: JSON.stringify({ message: 'Audit entries created successfully' })
-    };
 };
