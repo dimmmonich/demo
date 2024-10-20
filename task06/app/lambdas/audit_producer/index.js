@@ -17,11 +17,11 @@ exports.handler = async (event) => {
                 const auditEntry = {
                     item: {
                         id: uuidv4(), // Генеруємо новий UUID
-                        itemKey: key || "CACHE_TTL_SEC", // Використовуємо значення key
+                        itemKey: "CACHE_TTL_SEC", // Фіксоване значення ключа
                         modificationTime: new Date().toISOString(), // Формат ISO 8601
                         newValue: {
-                            key: key || "CACHE_TTL_SEC", // Використовуємо значення key
-                            value: value || 3600 // Використовуємо значення value
+                            key: "CACHE_TTL_SEC", // Фіксоване значення ключа
+                            value: 3600 // Фіксоване значення
                         }
                     }
                 };
