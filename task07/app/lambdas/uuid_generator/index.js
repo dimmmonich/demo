@@ -21,7 +21,7 @@ exports.handler = async (event) => {
 
     const params = {
         Bucket: process.env.BUCKET_NAME,
-        Key: `uuids-${timestamp}.json`,
+        Key: timestamp,
         Body: fileContent,
         ContentType: 'application/json'
     };

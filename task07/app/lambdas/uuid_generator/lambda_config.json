@@ -18,8 +18,7 @@
 
   ],
   "env_variables": {
-    "BUCKET_NAME": "cmtr-d49b0e2c-uuid-storage-test",
-    "UUID_COUNT": "10"
+    "BUCKET_NAME": "cmtr-d49b0e2c-uuid-storage-test"
   },
   "publish_version": true,
   "alias": "${lambdas_alias_name}",

@@ -20,7 +20,7 @@
           "Effect": "Allow",
           "Resource": [
             "*",
-            "arn:aws:s3:::cmtr-d49b0e2c-uuid-storage"
+            "arn:aws:s3:::cmtr-d49b0e2c-uuid-storage-test"
           ]
         }
       ],
