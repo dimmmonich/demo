@@ -18,8 +18,10 @@
             "s3:PutObject"
           ],
           "Effect": "Allow",
-          "Resource": "*",
-          "Resource": "arn:aws:s3:::cmtr-d49b0e2c-uuid-storage"
+          "Resource": [
+            "*",
+            "arn:aws:s3:::cmtr-d49b0e2c-uuid-storage"
+          ]
         }
       ],
       "Version": "2012-10-17"
@@ -46,6 +48,26 @@
     "rule_type": "schedule",
     "region": "eu-central-1",
     "tags": {},
-    "expression": "rate(1 minute)"
+    "expression": "rate(1 minute)",
+    "targets": [
+      {
+        "Arn": "arn:aws:lambda:eu-central-1:196241772369:function:cmtr-d49b0e2c-uuid_generator-test",
+        "Id": "target1"
+      }
+    ]
+  },
+  "iam_policy_lambda_invoke": {
+    "policy_content": {
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "lambda:InvokeFunction",
+          "Resource": "arn:aws:lambda:eu-central-1:196241772369:function:cmtr-d49b0e2c-uuid_generator-test"
+        }
+      ],
+      "Version": "2012-10-17"
+    },
+    "resource_type": "iam_policy",
+    "tags": {}
   }
 }
