@@ -19,7 +19,7 @@
           ],
           "Effect": "Allow",
           "Resource": "*",
-          "Resource": "arn:aws:s3:::cmtr-d49b0e2c-uuid-storage/*"
+          "Resource": "arn:aws:s3:::cmtr-d49b0e2c-uuid-storage"
         }
       ],
       "Version": "2012-10-17"
