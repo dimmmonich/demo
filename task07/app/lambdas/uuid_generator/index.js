@@ -1,38 +1,25 @@
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
-
-const s3Client = new S3Client({ region: 'eu-central-1' }); // Set your region
+const s3 = new AWS.S3();
 
 exports.handler = async (event) => {
-    const startTime = new Date().toISOString(); // Get the current execution start time
-    const bucketName = 'cmtr-d49b0e2c-uuid-storage-test'; // Replace with your bucket name
-    const fileName = `uuids_${startTime}.txt`; // Generate file name with execution time
+    const ids = Array.from({ length: 10 }, () => uuidv4());
+    const timeStamp = new Date().toISOString();
+    const fileName = `${timeStamp}.json`;
+    const fileContent = JSON.stringify({ ids }, null, 2);
 
-    // Generate 10 random UUIDs
-    const uuids = Array.from({ length: 10 }, () => uuidv4());
-
-    // Prepare the content for the S3 object
-    const content = uuids.join('\n');
-
-    // Create S3 PutObject command
-    const command = new PutObjectCommand({
-        Bucket: bucketName,
+    const params = {
+        Bucket: 'cmtr-d49b0e2c-uuid-storage-test', // Replace with your bucket name
         Key: fileName,
-        Body: content,
-        ContentType: "text/plain"
-    });
+        Body: fileContent,
+        ContentType: 'application/json'
+    };
 
     try {
-        // Upload the file to S3
-        await s3Client.send(command);
-        console.log(`Successfully uploaded ${fileName} to ${bucketName}`);
+        await s3.putObject(params).promise();
+        console.log(`File ${fileName} created successfully.`);
     } catch (error) {
-        console.error(`Error uploading file: ${error}`);
-        throw new Error(`File upload failed: ${error.message}`);
+        console.error(`Error creating file: ${error}`);
+        throw error;
     }
-
-    return {
-        statusCode: 200,
-        body: JSON.stringify({ message: 'UUIDs generated and stored successfully!', uuids }),
-    };
 };
