@@ -4,8 +4,7 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = async (event) => {
     try {
-        // Припускаємо, що дані приходять у формі item
-        const { key, value } = event.item; // Використання event.item для деструктуризації
+        const { key, value } = event.item;
         const eventId = uuidv4();
         const modificationTime = new Date().toISOString();
 
