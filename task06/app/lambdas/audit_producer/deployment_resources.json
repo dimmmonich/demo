@@ -3,9 +3,31 @@
     "predefined_policies": [],
     "principal_service": "lambda",
     "custom_policies": [
-      "lambda-basic-execution"
+      "lambda-basic-execution",
+      "dynamodb-streams-read-access"
     ],
     "resource_type": "iam_role",
     "tags": {}
+  },
+  "dynamodb-streams-read-access": {
+    "resource_type": "iam_policy",
+    "policy_content": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "dynamodb:PutItem",
+            "dynamodb:DescribeTable",
+            "dynamodb:UpdateTable",
+            "dynamodb:GetRecords",
+            "dynamodb:ListStreams",
+            "dynamodb:DescribeStream",
+            "dynamodb:GetShardIterator"
+          ],
+          "Resource": ["*"]
+        }
+      ]
+    }
   }
 }
