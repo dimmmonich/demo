@@ -51,7 +51,7 @@
     "expression": "rate(1 minute)",
     "targets": [
       {
-        "Arn": "arn:aws:lambda:eu-central-1:196241772369:function:cmtr-d49b0e2c-uuid_generator-test",
+        "Arn": "arn:aws:lambda:eu-central-1:196241772369:function:cmtr-d49b0e2c-uuid_generator",
         "Id": "target1"
       }
     ]
@@ -62,7 +62,7 @@
         {
           "Effect": "Allow",
           "Action": "lambda:InvokeFunction",
-          "Resource": "arn:aws:lambda:eu-central-1:196241772369:function:cmtr-d49b0e2c-uuid_generator-test"
+          "Resource": "arn:aws:lambda:eu-central-1:196241772369:function:cmtr-d49b0e2c-uuid_generator"
         }
       ],
       "Version": "2012-10-17"
