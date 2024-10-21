@@ -7,5 +7,21 @@
     ],
     "resource_type": "iam_role",
     "tags": {}
+  },
+
+  "s3-put-object-policy": {
+    "resource_type": "iam_policy",
+    "policy_content": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": "s3:PutObject",
+          "Resource": "*"
+        }
+      ]
+    }
   }
+
+
 }
