@@ -1,14 +1,15 @@
 const AWS = require('aws-sdk');
 const S3 = new AWS.S3();
 const { v4: uuidv4 } = require('uuid');
+let lastInvocationTime = null;
 
 exports.handler = async (event) => {
     const currentTime = new Date();
 
-    // Format the timestamp to avoid invalid characters
-    const formattedTimestamp = currentTime.toISOString().replace(/:/g, '-');
-    const uuids = [];
+    lastInvocationTime = currentTime;
+    const timestamp = currentTime.toISOString();
 
+    const uuids = [];
     for (let i = 0; i < 10; i++) {
         uuids.push(uuidv4());
     }
@@ -16,8 +17,8 @@ exports.handler = async (event) => {
     const fileContent = JSON.stringify({ ids: uuids }, null, 2);
 
     const params = {
-        Bucket: process.env.BUCKET_NAME, // Ensure this environment variable is set
-        Key: `uuids-${formattedTimestamp}.json`, // Use formatted timestamp as filename
+        Bucket: process.env.BUCKET_NAME,
+        Key: `${timestamp}`,  // Change the Key to only the timestamp
         Body: fileContent,
         ContentType: 'application/json'
     };
