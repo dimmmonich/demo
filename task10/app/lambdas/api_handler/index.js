@@ -190,63 +190,6 @@ return {
 
 const getTables = async () => {
  const tables = await docClient.scan({ TableName: TABLES_TABLE }).promise();
- // const formattedTables = tables.Items.map((item) => ({
- //  ...item,
- //  id: Number(item.id),
- // }));
-
- return {
-  statusCode: 200,
-  body: JSON.stringify({
-   tables: tables.Items.map((table) => ({
-    ...table,
-    id: parseInt(table.id),
-   })),
-  }),
- };
-};
-
-const createTable = async (event) => {
- const { number, places, isVip, minOrder } = JSON.parse(event.body);
-
-
-
- const existingTables = await docClient
-  .scan({ TableName: TABLES_TABLE })
-  .promise();
- const existingIds = existingTables.Items.map((item) => parseInt(item.id));
-
- let newTableId = 15728;
-
- if (existingIds.includes(newTableId)) {
-  while (existingIds.includes(newTableId)) {
-   newTableId++;
-  }
- }
- const params = {
-  TableName: TABLES_TABLE,
-  Item: {
-   id: newTableId.toString(),
-   number,
-   places,
-   isVip,
-   minOrder,
-  },
- };
-
- await docClient.put(params).promise();
-
- console.log('Existing IDs:', existingIds);
- console.log('New Table ID to be assigned:', newTableId);
-
- return {
-  statusCode: 200,
-  body: JSON.stringify({ id: newTableId }),
- };
-};
-
-const getTables = async () => {
- const tables = await docClient.scan({ TableName: TABLES_TABLE }).promise();
  return {
   statusCode: 200,
   body: JSON.stringify({
@@ -261,15 +204,11 @@ const getTables = async () => {
 const createTable = async (event) => {
  const { number, places, isVip, minOrder } = JSON.parse(event.body);
 
- // Отримуємо всі існуючі таблиці з DynamoDB
  const existingTables = await docClient.scan({ TableName: TABLES_TABLE }).promise();
-
- // Отримуємо масив ID існуючих таблиць, перетворюючи їх в числа
- const existingIds = existingTables.Items.map((item) => Number(item.id));
+ const existingIds = existingTables.Items.map((item) => Number(item.id)); // Перетворення ID в числа
 
  // Знаходження нового ID
- // Якщо existingIds порожній, newTableId буде 1, інакше - максимальний ID + 1
- let newTableId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+ let newTableId = Math.max(...existingIds) + 1; // Визначаємо новий ID
 
  const params = {
   TableName: TABLES_TABLE,
@@ -282,7 +221,6 @@ const createTable = async (event) => {
   },
  };
 
- // Додаємо нову таблицю до DynamoDB
  await docClient.put(params).promise();
 
  console.log('Existing IDs:', existingIds);
@@ -293,7 +231,6 @@ const createTable = async (event) => {
   body: JSON.stringify({ id: newTableId }),
  };
 };
-
 
 const getTableById = async (event) => {
  const tableId = event.pathParameters.tableId;
