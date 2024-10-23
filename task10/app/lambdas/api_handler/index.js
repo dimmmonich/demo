@@ -5,8 +5,8 @@ const cognito = new AWS.CognitoIdentityServiceProvider();
 const docClient = new AWS.DynamoDB.DocumentClient();
 
 const USER_POOL_ID = process.env.cup_id;
-const TABLES_TABLE = 'cmtr-da5bf8a7-Tables-test';
-const RESERVATIONS_TABLE = 'cmtr-da5bf8a7-Reservations-test';
+const TABLES_TABLE = 'cmtr-d49b0e2c-Tables-test';
+const RESERVATIONS_TABLE = 'cmtr-d49b0e2c-Reservations-test';
 const CLIENT_ID = process.env.cup_client_id;
 
 // const isAuthenticated = async (event) => {
