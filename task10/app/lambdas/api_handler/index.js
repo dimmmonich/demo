@@ -209,30 +209,7 @@ const getTables = async () => {
 const createTable = async (event) => {
  const { number, places, isVip, minOrder } = JSON.parse(event.body);
 
- // const existingTable = await docClient
- //  .scan({
- //   TableName: TABLES_TABLE,
- //   FilterExpression: 'number = :number',
- //   ExpressionAttributeValues: { ':number': number },
- //  })
- //  .promise();
 
- // if (existingTable.Items.length > 0) {
- //  return {
- //   statusCode: 200,
- //   body: JSON.stringify({ id: existingTable.Items[0].id }),
- //  };
- // }
-
- // const tableId = Math.floor(Math.random() * 100000);
- // const tableId = Math.random() > 0.5 ? 15728 : 15729;
- // const tables = await docClient.scan({ TableName: TABLES_TABLE }).promise();
- // let maxId = tables.Items.reduce(
- //  (max, item) => Math.max(max, parseInt(item.id)),
- //  0
- // );
-
- // const newTableId = maxId + 1;
 
  const existingTables = await docClient
   .scan({ TableName: TABLES_TABLE })
@@ -268,12 +245,60 @@ const createTable = async (event) => {
  };
 };
 
+const getTables = async () => {
+ const tables = await docClient.scan({ TableName: TABLES_TABLE }).promise();
+ return {
+  statusCode: 200,
+  body: JSON.stringify({
+   tables: tables.Items.map((table) => ({
+    ...table,
+    id: Number(table.id), // Перетворення ID в число
+   })),
+  }),
+ };
+};
+
+const createTable = async (event) => {
+ const { number, places, isVip, minOrder } = JSON.parse(event.body);
+
+ // Отримуємо всі існуючі таблиці з DynamoDB
+ const existingTables = await docClient.scan({ TableName: TABLES_TABLE }).promise();
+
+ // Отримуємо масив ID існуючих таблиць, перетворюючи їх в числа
+ const existingIds = existingTables.Items.map((item) => Number(item.id));
+
+ // Знаходження нового ID
+ // Якщо existingIds порожній, newTableId буде 1, інакше - максимальний ID + 1
+ let newTableId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+
+ const params = {
+  TableName: TABLES_TABLE,
+  Item: {
+   id: newTableId, // Зберігаємо як число
+   number,
+   places,
+   isVip,
+   minOrder,
+  },
+ };
+
+ // Додаємо нову таблицю до DynamoDB
+ await docClient.put(params).promise();
+
+ console.log('Existing IDs:', existingIds);
+ console.log('New Table ID to be assigned:', newTableId);
+
+ return {
+  statusCode: 200,
+  body: JSON.stringify({ id: newTableId }),
+ };
+};
+
+
 const getTableById = async (event) => {
- // Extract tableId from path parameters
  const tableId = event.pathParameters.tableId;
  console.log('Received Table ID:', tableId);
 
- // Validate the tableId
  if (!tableId) {
   return {
    statusCode: 400,
@@ -281,11 +306,10 @@ const getTableById = async (event) => {
   };
  }
 
- // Define parameters for DynamoDB get operation
  const params = {
   TableName: TABLES_TABLE,
   Key: {
-   id: tableId,
+   id: Number(tableId), // Перетворення ID в число
   },
  };
 
@@ -297,7 +321,7 @@ const getTableById = async (event) => {
   if (!table.Item) {
    console.error('Table not found for ID:', tableId);
    return {
-    statusCode: 400,
+    statusCode: 404, // Використання 404, якщо таблицю не знайдено
     body: JSON.stringify({ message: 'Table not found' }),
    };
   }
@@ -305,7 +329,7 @@ const getTableById = async (event) => {
   return {
    statusCode: 200,
    body: JSON.stringify({
-    id: table.Item.id,
+    id: Number(table.Item.id), // Перетворення ID в число
     number: table.Item.number,
     places: table.Item.places,
     isVip: table.Item.isVip,
@@ -320,6 +344,7 @@ const getTableById = async (event) => {
   };
  }
 };
+
 
 const getReservations = async () => {
  const reservations = await docClient
