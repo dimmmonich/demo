@@ -190,30 +190,43 @@ return {
 
 const getTables = async () => {
  const tables = await docClient.scan({ TableName: TABLES_TABLE }).promise();
+ // const formattedTables = tables.Items.map((item) => ({
+ //  ...item,
+ //  id: Number(item.id),
+ // }));
+
  return {
   statusCode: 200,
   body: JSON.stringify({
    tables: tables.Items.map((table) => ({
     ...table,
-    id: Number(table.id), // Перетворення ID в число
+    id: parseInt(table.id),
    })),
   }),
  };
 };
 
 const createTable = async (event) => {
- const { number, places, isVip, minOrder } = JSON.parse(event.body);
+ const { id, number, places, isVip, minOrder } = JSON.parse(event.body);
 
- const existingTables = await docClient.scan({ TableName: TABLES_TABLE }).promise();
- const existingIds = existingTables.Items.map((item) => Number(item.id)); // Перетворення ID в числа
+ const existingTables = await docClient
+     .scan({ TableName: TABLES_TABLE })
+     .promise();
+ const existingIds = existingTables.Items.map((item) => parseInt(item.id, 10));
 
- // Знаходження нового ID
- let newTableId = Math.max(...existingIds) + 1; // Визначаємо новий ID
+ console.log('Existing IDs:', existingIds);
+
+ if (existingIds.includes(id)) {
+  return {
+   statusCode: 400,
+   body: JSON.stringify({ error: 'Table ID already exists.' }),
+  };
+ }
 
  const params = {
   TableName: TABLES_TABLE,
   Item: {
-   id: newTableId, // Зберігаємо як число
+   id: id.toString(),
    number,
    places,
    isVip,
@@ -224,64 +237,59 @@ const createTable = async (event) => {
  await docClient.put(params).promise();
 
  console.log('Existing IDs:', existingIds);
- console.log('New Table ID to be assigned:', newTableId);
+ console.log('New Table ID to be assigned:', id);
 
  return {
   statusCode: 200,
-  body: JSON.stringify({ id: newTableId }),
+  body: JSON.stringify({ id: id }),
  };
 };
 
 const getTableById = async (event) => {
- const tableId = event.pathParameters.tableId;
+ const tableId = event.pathParameters.id;
  console.log('Received Table ID:', tableId);
 
- if (!tableId) {
+ if (!/^\d+$/.test(tableId)) {
   return {
    statusCode: 400,
-   body: JSON.stringify({ message: 'Table ID is required' }),
+   body: JSON.stringify({
+    message: 'Bad Request: Invalid table ID format.',
+   }),
   };
  }
 
  const params = {
   TableName: TABLES_TABLE,
   Key: {
-   id: Number(tableId), // Перетворення ID в число
+   id: Number(tableId),
   },
  };
 
- try {
-  console.log('DynamoDB Get Parameters:', params);
-  const table = await docClient.get(params).promise();
-  console.log('DynamoDB Response:', table);
+ console.log('DynamoDB Query Parameters:', params);
 
-  if (!table.Item) {
-   console.error('Table not found for ID:', tableId);
+ try {
+  const result = await docClient.get(params).promise();
+  console.log('DynamoDB Result:', result);
+
+  if (!result.Item) {
    return {
-    statusCode: 404, // Використання 404, якщо таблицю не знайдено
-    body: JSON.stringify({ message: 'Table not found' }),
+    statusCode: 404,
+    body: JSON.stringify({ message: 'Not Found' }),
    };
   }
 
   return {
    statusCode: 200,
-   body: JSON.stringify({
-    id: Number(table.Item.id), // Перетворення ID в число
-    number: table.Item.number,
-    places: table.Item.places,
-    isVip: table.Item.isVip,
-    minOrder: table.Item.minOrder,
-   }),
+   body: JSON.stringify(result.Item),
   };
  } catch (error) {
-  console.error('Error fetching table:', error);
+  console.error('DynamoDB Error:', error);
   return {
    statusCode: 500,
-   body: JSON.stringify({ message: 'Internal server error' }),
+   body: JSON.stringify({ message: 'Internal Server Error' }),
   };
  }
 };
-
 
 const getReservations = async () => {
  const reservations = await docClient
