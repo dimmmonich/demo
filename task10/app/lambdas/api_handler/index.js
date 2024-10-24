@@ -209,14 +209,17 @@ const getTables = async () => {
 const createTable = async (event) => {
  const { id, number, places, isVip, minOrder } = JSON.parse(event.body);
 
- const existingTables = await docClient
-     .scan({ TableName: TABLES_TABLE })
-     .promise();
- const existingIds = existingTables.Items.map((item) => parseInt(item.id, 10));
+ // Перевірка, чи вже існує таблиця з даним ID
+ const checkParams = {
+  TableName: TABLES_TABLE,
+  Key: {
+   id: id.toString(),
+  },
+ };
 
- console.log('Existing IDs:', existingIds);
+ const existingTable = await docClient.get(checkParams).promise();
 
- if (existingIds.includes(id)) {
+ if (existingTable.Item) {
   return {
    statusCode: 400,
    body: JSON.stringify({ error: 'Table ID already exists.' }),
@@ -236,20 +239,17 @@ const createTable = async (event) => {
 
  await docClient.put(params).promise();
 
- console.log('Existing IDs:', existingIds);
- console.log('New Table ID to be assigned:', id);
+ console.log('New Table Created with ID:', id);
 
  return {
   statusCode: 200,
   body: JSON.stringify({ id: id }),
  };
 };
-
 const getTableById = async (event) => {
- const tableId = event.Item.id;
+ const tableId = event.pathParameters.id;
  console.log('Received Table ID:', tableId);
 
- // Перевіряємо, чи id - це число
  if (!/^\d+$/.test(tableId)) {
   return {
    statusCode: 400,
@@ -259,11 +259,10 @@ const getTableById = async (event) => {
   };
  }
 
-
  const params = {
   TableName: TABLES_TABLE,
   Key: {
-   id: Number(tableId),
+   id: tableId.toString(),
   },
  };
 
@@ -273,7 +272,6 @@ const getTableById = async (event) => {
   const result = await docClient.get(params).promise();
   console.log('DynamoDB Result:', result);
 
-  // Перевіряємо, чи існує результат
   if (!result.Item) {
    return {
     statusCode: 404,
@@ -293,8 +291,6 @@ const getTableById = async (event) => {
   };
  }
 };
-
-
 
 const getReservations = async () => {
  const reservations = await docClient
