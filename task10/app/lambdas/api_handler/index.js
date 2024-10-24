@@ -190,17 +190,13 @@ return {
 
 const getTables = async () => {
  const tables = await docClient.scan({ TableName: TABLES_TABLE }).promise();
- // const formattedTables = tables.Items.map((item) => ({
- //  ...item,
- //  id: Number(item.id),
- // }));
 
  return {
   statusCode: 200,
   body: JSON.stringify({
    tables: tables.Items.map((table) => ({
     ...table,
-    id: parseInt(table.id),
+    id: parseInt(table.id), // Перетворення ID на числовий формат
    })),
   }),
  };
@@ -250,6 +246,7 @@ const getTableById = async (event) => {
  const tableId = event.pathParameters.id;
  console.log('Received Table ID:', tableId);
 
+ // Перевірка, чи ID є числовим
  if (!/^\d+$/.test(tableId)) {
   return {
    statusCode: 400,
@@ -262,7 +259,7 @@ const getTableById = async (event) => {
  const params = {
   TableName: TABLES_TABLE,
   Key: {
-   id: tableId.toString(),
+   id: tableId.toString(), // Використовуємо рядок як ключ, якщо id в DynamoDB зберігається як рядок
   },
  };
 
@@ -291,6 +288,7 @@ const getTableById = async (event) => {
   };
  }
 };
+
 
 const getReservations = async () => {
  const reservations = await docClient
