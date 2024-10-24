@@ -246,8 +246,8 @@ const getTableById = async (event) => {
  const tableId = event.pathParameters.id;
  console.log('Received Table ID:', tableId);
 
- // Перевірка, чи ID є числовим
- if (!/^\d+$/.test(tableId)) {
+ // Якщо ключ зберігається у вигляді рядка в DynamoDB, видалимо перевірку на число
+ if (!tableId) {
   return {
    statusCode: 400,
    body: JSON.stringify({
@@ -259,7 +259,7 @@ const getTableById = async (event) => {
  const params = {
   TableName: TABLES_TABLE,
   Key: {
-   id: tableId.toString(), // Використовуємо рядок як ключ, якщо id в DynamoDB зберігається як рядок
+   id: tableId, // Використовуємо рядок для ключа
   },
  };
 
