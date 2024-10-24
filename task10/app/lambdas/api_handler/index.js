@@ -249,6 +249,7 @@ const getTableById = async (event) => {
  const tableId = event.pathParameters.id;
  console.log('Received Table ID:', tableId);
 
+ // Перевіряємо, чи id - це число
  if (!/^\d+$/.test(tableId)) {
   return {
    statusCode: 400,
@@ -258,10 +259,11 @@ const getTableById = async (event) => {
   };
  }
 
+ // Змінюємо ключ id на рядок, якщо у таблиці це рядок
  const params = {
   TableName: TABLES_TABLE,
   Key: {
-   id: tableId, // зберігаємо рядок, без Number()
+   id: Number(tableId), // використовуйте Number або залиште як рядок, залежно від формату в таблиці
   },
  };
 
@@ -271,6 +273,7 @@ const getTableById = async (event) => {
   const result = await docClient.get(params).promise();
   console.log('DynamoDB Result:', result);
 
+  // Перевіряємо, чи існує результат
   if (!result.Item) {
    return {
     statusCode: 404,
@@ -290,6 +293,7 @@ const getTableById = async (event) => {
   };
  }
 };
+
 
 
 const getReservations = async () => {
