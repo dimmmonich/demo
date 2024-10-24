@@ -246,7 +246,7 @@ const createTable = async (event) => {
 };
 
 const getTableById = async (event) => {
- const tableId = event.pathParameters.id;
+ const tableId = event.Item.id;
  console.log('Received Table ID:', tableId);
 
  // Перевіряємо, чи id - це число
@@ -259,11 +259,11 @@ const getTableById = async (event) => {
   };
  }
 
- // Змінюємо ключ id на рядок, якщо у таблиці це рядок
+
  const params = {
   TableName: TABLES_TABLE,
   Key: {
-   id: Number(tableId), // використовуйте Number або залиште як рядок, залежно від формату в таблиці
+   id: Number(tableId),
   },
  };
 
