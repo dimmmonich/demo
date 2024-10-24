@@ -261,7 +261,7 @@ const getTableById = async (event) => {
  const params = {
   TableName: TABLES_TABLE,
   Key: {
-   id: Number(tableId),
+   id: tableId, // зберігаємо рядок, без Number()
   },
  };
 
@@ -290,6 +290,7 @@ const getTableById = async (event) => {
   };
  }
 };
+
 
 const getReservations = async () => {
  const reservations = await docClient
