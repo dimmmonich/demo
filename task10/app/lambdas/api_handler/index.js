@@ -209,7 +209,7 @@ const createTable = async (event) => {
  const checkParams = {
   TableName: TABLES_TABLE,
   Key: {
-   id: id.toString(),
+   id: id.toString(), // Переконайтеся, що ID зберігається у вигляді рядка
   },
  };
 
@@ -242,6 +242,7 @@ const createTable = async (event) => {
   body: JSON.stringify({ id: id }),
  };
 };
+
 const getTableById = async (event) => {
  const tableId = event.pathParameters.id;
  console.log('Received Table ID:', tableId);
