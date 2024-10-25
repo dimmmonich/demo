@@ -243,11 +243,15 @@ const createTable = async (event) => {
  };
 };
 
+const AWS = require('aws-sdk');
+const docClient = new AWS.DynamoDB.DocumentClient();
+
 const getTableById = async (event) => {
+ // Отримуємо tableId з параметрів шляху
  const tableId = event.pathParameters.id;
  console.log('Received Table ID:', tableId);
 
- // Якщо ключ зберігається у вигляді рядка в DynamoDB, видалимо перевірку на число
+ // Перевіряємо чи передано tableId
  if (!tableId) {
   return {
    statusCode: 400,
@@ -257,19 +261,22 @@ const getTableById = async (event) => {
   };
  }
 
+ // Параметри для запиту до DynamoDB
  const params = {
-  TableName: TABLES_TABLE,
+  TableName: process.env.tables_table, // Ім'я таблиці з середовища виконання
   Key: {
-   id: tableId, // Використовуємо рядок для ключа
+   id: tableId, // Використовуємо tableId як ключ
   },
  };
 
  console.log('DynamoDB Query Parameters:', params);
 
  try {
+  // Виконання запиту до DynamoDB
   const result = await docClient.get(params).promise();
   console.log('DynamoDB Result:', result);
 
+  // Якщо стіл не знайдений
   if (!result.Item) {
    return {
     statusCode: 404,
@@ -277,18 +284,37 @@ const getTableById = async (event) => {
    };
   }
 
+  // Створюємо відповідь на основі отриманих даних
+  const tableData = {
+   id: parseInt(result.Item.id), // Конвертація id до числа
+   number: parseInt(result.Item.number), // Конвертація number до числа
+   places: parseInt(result.Item.places), // Конвертація places до числа
+   isVip: result.Item.isVip, // Boolean значення
+  };
+
+  // Перевіряємо наявність minOrder
+  if (result.Item.minOrder) {
+   tableData.minOrder = parseInt(result.Item.minOrder); // Конвертація minOrder до числа
+  }
+
+  // Повертаємо успішну відповідь
   return {
    statusCode: 200,
-   body: JSON.stringify(result.Item),
+   body: JSON.stringify(tableData),
   };
+
  } catch (error) {
   console.error('DynamoDB Error:', error);
+
+  // У разі виникнення помилки повертаємо відповідь з кодом 500
   return {
    statusCode: 500,
    body: JSON.stringify({ message: 'Internal Server Error' }),
   };
  }
 };
+
+module.exports = { getTableById };
 
 
 const getReservations = async () => {
