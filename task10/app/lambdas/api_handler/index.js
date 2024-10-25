@@ -10,9 +10,6 @@ const TABLES_TABLE = 'cmtr-d49b0e2c-Tables-test';
 const RESERVATIONS_TABLE = 'cmtr-d49b0e2c-Reservations-test';
 const CLIENT_ID = process.env.cup_client_id;
 
-
-
-
 // const isAuthenticated = async (event) => {
 //  const token = event.headers.Authorization;
 //  if (!token) return false;
@@ -58,7 +55,7 @@ const routeHandlers = {
 // Main handler
 exports.handler = async (event, context) => {
  try {
-  const routeKey = `${event.httpMethod}${event.resource};`
+  const routeKey = `${event.httpMethod} ${event.resource}`;
 
   const handler =
       routeHandlers[routeKey] || routeHandlers[`GET /tables/{tableId}`];
@@ -327,7 +324,6 @@ const createTable = async (event) => {
    item.minOrder = parseInt(body.minOrder, 10);
   }
 
-
   const params = {
    TableName: TABLES_TABLE,
    Item: item,
@@ -489,7 +485,6 @@ const getReservations = async () => {
   const scanParams = {
    TableName: RESERVATIONS_TABLE,
   };
-
 
   const data = await docClient.scan(scanParams).promise();
   const reservations = data.Items.map((item) => ({
