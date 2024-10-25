@@ -63,7 +63,7 @@ exports.handler = async (event) => {
     }
     break;
 
-   case '/tables/{tableId}':
+   case '/tables/':
     if (event.httpMethod === 'GET') {
      return await getTableById(event);
     }
