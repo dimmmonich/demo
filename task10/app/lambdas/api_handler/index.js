@@ -10,6 +10,9 @@ const TABLES_TABLE = 'cmtr-d49b0e2c-Tables-test';
 const RESERVATIONS_TABLE = 'cmtr-d49b0e2c-Reservations-test';
 const CLIENT_ID = process.env.cup_client_id;
 
+
+
+
 // const isAuthenticated = async (event) => {
 //  const token = event.headers.Authorization;
 //  if (!token) return false;
@@ -29,69 +32,131 @@ const validatePassword = (password) => {
  return passwordRegex.test(password);
 };
 
-exports.handler = async (event) => {
+const corsHeaders = {
+ 'Access-Control-Allow-Headers': '*',
+ 'Access-Control-Allow-Origin': '*',
+ 'Access-Control-Allow-Methods': '*',
+ 'Accept-Version': '*',
+};
+
+// Route handlers
+const routeHandlers = {
+ 'POST /signup': async (event, context) =>
+     handleSignUp(event, context, cognito),
+ 'POST /signin': async (event, context) =>
+     handleSignIn(event, context, cognito),
+ 'GET /tables': async (event, context) => getTables(event, context),
+ 'POST /tables': async (event, context) => createTable(event, context),
+ 'GET /tables/{tableId}': async (event, context) =>
+     getTableById(event, context),
+ 'GET /reservations': async (event, context) =>
+     getReservations(event, context),
+ 'POST /reservations': async (event, context) =>
+     createReservation(event, context),
+};
+
+// Main handler
+exports.handler = async (event, context) => {
  try {
-  // if (['/tables', '/reservations'].includes(event.path)) {
-  //  const isAuth = await isAuthenticated(event);
-  //  if (!isAuth) {
-  //   return {
-  //    statusCode: 401,
-  //    body: JSON.stringify({ message: 'Unauthorized' }),
-  //   };
-  //  }
-  // }
+  const routeKey = `${event.httpMethod}${event.resource};`
 
-  switch (event.path) {
-   case '/signin':
-    if (event.httpMethod === 'POST') {
-     return await handleSignIn(event);
-    }
-    break;
-
-   case '/signup':
-    if (event.httpMethod === 'POST') {
-     return await handleSignUp(event);
-    }
-    break;
-
-   case '/tables':
-    if (event.httpMethod === 'GET') {
-     return await getTables();
-    }
-    if (event.httpMethod === 'POST') {
-     return await createTable(event);
-    }
-    break;
-
-   case '/tables/':
-    if (event.httpMethod === 'GET') {
-     return await getTableById(event);
-    }
-    break;
-
-   case '/reservations':
-    if (event.httpMethod === 'GET') {
-     return await getReservations();
-    }
-    if (event.httpMethod === 'POST') {
-     return await createReservation(event);
-    }
-    break;
-
-   default:
-    return {
-     statusCode: 404,
-     body: JSON.stringify({ message: 'Not Found' }),
-    };
+  const handler =
+      routeHandlers[routeKey] || routeHandlers[`GET /tables/{tableId}`];
+  if (handler) {
+   const response = await handler(event, context);
+   return {
+    ...response,
+    headers: { ...response.headers, ...corsHeaders },
+   };
   }
+
+  // Fallback response if route not found
+  return {
+   statusCode: 404,
+   headers: corsHeaders,
+   body: JSON.stringify({ error: 'Route not found' }),
+  };
  } catch (error) {
-  console.error(error);
+  console.error('Error handling request:', error);
   return {
    statusCode: 500,
-   body: JSON.stringify({ message: 'Internal Server Error' }),
+   headers: corsHeaders,
+   body: JSON.stringify({ error: 'Internal Server Error' }),
   };
  }
 };
+
+const initCognitoClient = () => {
+ return new AWS.CognitoIdentityServiceProvider({
+  region: REGION,
+  credentials: AWS.config.credentials,
+ });
+};
+
+// exports.handler = async (event) => {
+//  try {
+//   // if (['/tables', '/reservations'].includes(event.path)) {
+//   //  const isAuth = await isAuthenticated(event);
+//   //  if (!isAuth) {
+//   //   return {
+//   //    statusCode: 401,
+//   //    body: JSON.stringify({ message: 'Unauthorized' }),
+//   //   };
+//   //  }
+//   // }
+
+//   switch (event.path) {
+//    case '/signin':
+//     if (event.httpMethod === 'POST') {
+//      return await handleSignIn(event);
+//     }
+//     break;
+
+//    case '/signup':
+//     if (event.httpMethod === 'POST') {
+//      return await handleSignUp(event);
+//     }
+//     break;
+
+//    case '/tables':
+//     if (event.httpMethod === 'GET') {
+//      return await getTables();
+//     }
+//     if (event.httpMethod === 'POST') {
+//      return await createTable(event);
+//     }
+//     break;
+
+//    case '/tables/{tableId}':
+//     if (event.httpMethod === 'GET') {
+//      return await getTableById(event);
+//     }
+//     break;
+
+//    case '/reservations':
+//     if (event.httpMethod === 'GET') {
+//      return await getReservations();
+//     }
+//     if (event.httpMethod === 'POST') {
+//      return await createReservation(event);
+//     }
+//     break;
+
+
+//    default:
+//     return {
+//      statusCode: 404,
+//      body: JSON.stringify({ message: 'Not Found' }),
+//     };
+//   }
+//  } catch (error) {
+//   console.error(error);
+//   return {
+//    statusCode: 500,
+//    body: JSON.stringify({ message: 'Internal Server Error' }),
+//   };
+//  }
+// };
 
 const handleSignIn = async (event) => {
  const { username, password, email } = JSON.parse(event.body);
@@ -162,7 +227,6 @@ const handleSignUp = async (event) => {
   };
   await cognito.adminConfirmSignUp(confirmParams).promise();
 
-
   return {
    statusCode: 200,
    headers: {
@@ -190,21 +254,56 @@ const handleSignUp = async (event) => {
 };
 
 const getTables = async () => {
- const tables = await docClient.scan({ TableName: TABLES_TABLE }).promise();
+ const response = {
+  statusCode: 200,
+  headers: { 'Content-Type': 'application/json' },
+  body: '',
+ };
+
+ try {
+  const params = {
+   TableName: TABLES_TABLE,
+  };
+  const scanResult = await docClient.scan(params).promise();
+
+  const tables = scanResult.Items.map((item) => {
+   const tableData = {
+    id: parseInt(item.id, 10),
+    number: parseInt(item.number, 10),
+    places: parseInt(item.places, 10),
+    isVip: item.isVip,
+   };
+
+   if (item.minOrder !== undefined && item.minOrder !== null) {
+    tableData.minOrder = parseInt(item.minOrder, 10);
+   }
+
+   return tableData;
+  });
+
+  response.body = JSON.stringify({ tables });
+ } catch (error) {
+  console.error('Error scanning DynamoDB table:', error);
+  response.statusCode = 400;
+  response.body = JSON.stringify({ error: 'Error creating response' });
+ }
+
+ return response;
+ // const tables = await docClient.scan({ TableName: TABLES_TABLE }).promise();
  // const formattedTables = tables.Items.map((item) => ({
  //  ...item,
  //  id: Number(item.id),
  // }));
 
- return {
-  statusCode: 200,
-  body: JSON.stringify({
-   tables: tables.Items.map((table) => ({
-    ...table,
-    id: parseInt(table.id),
-   })),
-  }),
- };
+ // return {
+ //  statusCode: 200,
+ //  body: JSON.stringify({
+ //   tables: tables.Items.map((table) => ({
+ //    ...table,
+ //    id: parseInt(table.id),
+ //   })),
+ //  }),
+ // };
 };
 
 const createTable = async (event) => {
@@ -227,6 +326,7 @@ const createTable = async (event) => {
   if (body.minOrder !== undefined && body.minOrder !== null) {
    item.minOrder = parseInt(body.minOrder, 10);
   }
+
 
   const params = {
    TableName: TABLES_TABLE,
@@ -324,7 +424,6 @@ const getTableById = async (event) => {
   response.body = JSON.stringify({ error: 'Internal Server Error' });
  }
 
-
  return response;
  // console.log('Received Event:', JSON.stringify(event, null, 2));
  // if (!event.pathParameters || !event.pathParameters.id) {
@@ -390,6 +489,7 @@ const getReservations = async () => {
   const scanParams = {
    TableName: RESERVATIONS_TABLE,
   };
+
 
   const data = await docClient.scan(scanParams).promise();
   const reservations = data.Items.map((item) => ({
@@ -457,7 +557,6 @@ const createReservation = async (event) => {
    response.body = JSON.stringify({ error: 'Table not found' });
    return response;
   }
-
 
   const reservationCheckParams = {
    TableName: RESERVATIONS_TABLE,
@@ -530,7 +629,8 @@ const createReservation = async (event) => {
  //   slotTimeEnd,
  //  } = JSON.parse(event.body);
 
- //  const existingReservations = await docClient
+
+//  const existingReservations = await docClient
  //   .query({
  //    TableName: RESERVATIONS_TABLE,
  //    KeyConditionExpression:
