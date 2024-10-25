@@ -243,11 +243,11 @@ const createTable = async (event) => {
  };
 };
 const getTableById = async (event) => {
- // Отримуємо tableId з параметрів шляху
+ // Extract tableId from the path parameters
  const tableId = event.pathParameters.id;
  console.log('Received Table ID:', tableId);
 
- // Перевіряємо чи передано tableId
+ // Check if tableId is valid
  if (!tableId) {
   return {
    statusCode: 400,
@@ -257,43 +257,41 @@ const getTableById = async (event) => {
   };
  }
 
- // Параметри для запиту до DynamoDB
+ // Parameters for DynamoDB query
  const params = {
-  TableName: process.env.tables_table, // Ім'я таблиці з середовища виконання
-  Key: {
-   id: tableId, // Використовуємо tableId як ключ
-  },
+  TableName: TABLES_TABLE,  // DynamoDB table name from environment variables
+  Key: { id: tableId },  // Use tableId as the key
  };
 
  console.log('DynamoDB Query Parameters:', params);
 
  try {
-  // Виконання запиту до DynamoDB
+  // Execute the getItem query to DynamoDB
   const result = await docClient.get(params).promise();
   console.log('DynamoDB Result:', result);
 
-  // Якщо стіл не знайдений
+  // If the table is not found
   if (!result.Item) {
    return {
     statusCode: 404,
-    body: JSON.stringify({ message: 'Not Found' }),
+    body: JSON.stringify({ message: 'Table not found' }),
    };
   }
 
-  // Створюємо відповідь на основі отриманих даних
+  // Build the response data based on the DynamoDB result
   const tableData = {
-   id: parseInt(result.Item.id), // Конвертація id до числа
-   number: parseInt(result.Item.number), // Конвертація number до числа
-   places: parseInt(result.Item.places), // Конвертація places до числа
-   isVip: result.Item.isVip, // Boolean значення
+   id: parseInt(result.Item.id),             // Convert id to integer
+   number: parseInt(result.Item.number),     // Convert number to integer
+   places: parseInt(result.Item.places),     // Convert places to integer
+   isVip: result.Item.isVip,                 // Boolean value
   };
 
-  // Перевіряємо наявність minOrder
+  // Check if minOrder exists and add it to the response if present
   if (result.Item.minOrder) {
-   tableData.minOrder = parseInt(result.Item.minOrder); // Конвертація minOrder до числа
+   tableData.minOrder = parseInt(result.Item.minOrder);  // Convert minOrder to integer
   }
 
-  // Повертаємо успішну відповідь
+  // Return a successful response
   return {
    statusCode: 200,
    body: JSON.stringify(tableData),
@@ -302,7 +300,7 @@ const getTableById = async (event) => {
  } catch (error) {
   console.error('DynamoDB Error:', error);
 
-  // У разі виникнення помилки повертаємо відповідь з кодом 500
+  // Return a 500 response in case of an error
   return {
    statusCode: 500,
    body: JSON.stringify({ message: 'Internal Server Error' }),
