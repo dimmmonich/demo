@@ -209,7 +209,7 @@ const createTable = async (event) => {
  const checkParams = {
   TableName: TABLES_TABLE,
   Key: {
-   id: id.toString(), // Переконайтеся, що ID зберігається у вигляді рядка
+   id: id.toString(),
   },
  };
 
@@ -242,10 +242,6 @@ const createTable = async (event) => {
   body: JSON.stringify({ id: id }),
  };
 };
-
-const AWS = require('aws-sdk');
-const docClient = new AWS.DynamoDB.DocumentClient();
-
 const getTableById = async (event) => {
  // Отримуємо tableId з параметрів шляху
  const tableId = event.pathParameters.id;
@@ -313,8 +309,6 @@ const getTableById = async (event) => {
   };
  }
 };
-
-module.exports = { getTableById };
 
 
 const getReservations = async () => {
