@@ -307,140 +307,216 @@ const getTableById = async (event) => {
   };
  }
 };
-
-
 const getReservations = async () => {
- const reservations = await docClient
-  .scan({ TableName: RESERVATIONS_TABLE })
-  .promise();
-
- const formattedReservations = reservations.Items.map((reservation) => ({
-  tableNumber: reservation.tableId,
-  clientName: reservation.userId,
-  phoneNumber: reservation.phoneNumber,
-  date: reservation.dateTime.split('T')[0],
-  slotTimeStart: reservation.dateTime.split('T')[1].slice(0, 5),
-  slotTimeEnd: reservation.dateTime.split('T')[1].slice(0, 5),
- }));
-
-
-return {
+ const response = {
   statusCode: 200,
-  body: JSON.stringify({ reservations: formattedReservations }),
+  headers: { 'Content-Type': 'application/json' },
+  body: '',
  };
+
+ try {
+  const scanParams = {
+   TableName: RESERVATIONS_TABLE,
+  };
+
+  const data = await docClient.scan(scanParams).promise();
+  const reservations = data.Items.map((item) => ({
+   tableNumber: item.tableNumber,
+   clientName: item.clientName,
+   phoneNumber: item.phoneNumber,
+   date: item.date,
+   slotTimeStart: item.slotTimeStart,
+   slotTimeEnd: item.slotTimeEnd,
+  }));
+
+  response.body = JSON.stringify({ reservations });
+ } catch (error) {
+  console.error('Error retrieving reservations:', error);
+  response.statusCode = 500;
+  response.body = JSON.stringify({ error: 'Internal Server Error' });
+ }
+
+ return response;
+ // const reservations = await docClient
+ //  .scan({ TableName: RESERVATIONS_TABLE })
+ //  .promise();
+
+ // const formattedReservations = reservations.Items.map((reservation) => ({
+ //  tableNumber: reservation.tableId,
+ //  clientName: reservation.userId,
+ //  phoneNumber: reservation.phoneNumber,
+ //  date: reservation.dateTime.split('T')[0],
+ //  slotTimeStart:
+ //   reservation.slotTimeStart ||
+ //   reservation.dateTime.split('T')[1].slice(0, 5),
+ //  slotTimeEnd: reservation.slotTimeEnd || '15:00',
+ // }));
+
+ // return {
+ //  statusCode: 200,
+ //  body: JSON.stringify({ reservations: formattedReservations }),
+ // };
 };
 
 const createReservation = async (event) => {
+ const response = {
+  statusCode: 200,
+  headers: { 'Content-Type': 'application/json' },
+  body: '',
+ };
+
  try {
-  const {
-   tableNumber,
-   clientName,
-   phoneNumber,
-   date,
-   slotTimeStart,
-   slotTimeEnd,
-  } = JSON.parse(event.body);
+  const requestBody = JSON.parse(event.body);
+  const tableNumber = requestBody.tableNumber;
+  const date = requestBody.date;
+  const slotTimeStart = moment(requestBody.slotTimeStart, 'HH:mm');
+  const slotTimeEnd = moment(requestBody.slotTimeEnd, 'HH:mm');
 
-  if (
-   !tableNumber ||
-   !clientName ||
-   !phoneNumber ||
-   !date ||
-   !slotTimeStart ||
-   !slotTimeEnd
-  ) {
-   return {
-    statusCode: 400,
-    body: JSON.stringify({
-     message: 'Invalid input. All fields are required.',
-    }),
-   };
+  const tableCheckParams = {
+   TableName: TABLES_TABLE,
+   FilterExpression: '#number = :numberValue',
+   ExpressionAttributeNames: { '#number': 'number' },
+   ExpressionAttributeValues: { ':numberValue': tableNumber },
+  };
+
+  const tableScanResult = await docClient.scan(tableCheckParams).promise();
+  if (tableScanResult.Count < 1) {
+   response.statusCode = 400;
+   response.body = JSON.stringify({ error: 'Table not found' });
+   return response;
   }
 
-  const tableExists = await checkIfTableExists(tableNumber);
-  if (!tableExists) {
-   return {
-    statusCode: 400,
-    body: JSON.stringify({ message: 'Table does not exist.' }),
-   };
+  const reservationCheckParams = {
+   TableName: RESERVATIONS_TABLE,
+   FilterExpression: '#tableNumber = :tableNumberValue',
+   ExpressionAttributeNames: { '#tableNumber': 'tableNumber' },
+   ExpressionAttributeValues: { ':tableNumberValue': tableNumber },
+  };
+
+  const reservationsScanResult = await docClient
+      .scan(reservationCheckParams)
+      .promise();
+  for (const reservation of reservationsScanResult.Items) {
+   const reservationDate = reservation.date;
+   const reservationStart = moment(reservation.slotTimeStart, 'HH:mm');
+   const reservationEnd = moment(reservation.slotTimeEnd, 'HH:mm');
+
+   if (
+       reservationDate === date &&
+       (slotTimeStart.isBetween(
+               reservationStart,
+               reservationEnd,
+               null,
+               '[]'
+           ) ||
+           slotTimeEnd.isBetween(reservationStart, reservationEnd, null, '[]'))
+   ) {
+    response.statusCode = 400;
+    response.body = JSON.stringify({
+     error: 'Time slot is already reserved',
+    });
+    return response;
+   }
   }
 
-  const overlappingReservations = await checkForOverlappingReservations(
-   tableNumber,
-   date,
-   slotTimeStart,
-   slotTimeEnd
-  );
-  if (overlappingReservations.length > 0) {
-   return {
-    statusCode: 400,
-    body: JSON.stringify({
-     message: 'There is an overlapping reservation.',
-    }),
-   };
-  }
-
-  // const reservationId = uuidv4();
-
-  const params = {
+  const reservationId = uuidv4();
+  const putParams = {
    TableName: RESERVATIONS_TABLE,
    Item: {
-    tableNumber: uuidv4().toString(),
-    clientName,
-    phoneNumber,
-    date,
-    slotTimeStart,
-    slotTimeEnd,
+    id: reservationId,
+    tableNumber: tableNumber,
+    clientName: requestBody.clientName,
+    phoneNumber: requestBody.phoneNumber,
+    date: date,
+    slotTimeStart: requestBody.slotTimeStart,
+    slotTimeEnd: requestBody.slotTimeEnd,
    },
   };
 
-  await docClient.put(params).promise();
+  await docClient.put(putParams).promise();
 
-  return {
-   statusCode: 200,
-   body: JSON.stringify({ reservationId: params.Item.tableNumber }),
-  };
+  response.statusCode = 200;
+  response.body = JSON.stringify({ reservationId: reservationId });
  } catch (error) {
-  console.error('Error creating reservation:', error);
-  return {
-   statusCode: 400,
-   body: JSON.stringify({ message: 'Error creating reservation.' }),
-  };
+  console.error('Error processing reservation:', error);
+  response.statusCode = 500;
+  response.body = JSON.stringify({
+   error: 'Internal Server Error',
+   message: error.message,
+  });
  }
-};
 
-const checkIfTableExists = async (tableNumber) => {
- const result = await docClient
-  .get({
-   TableName: TABLES_TABLE,
-   Key: { id: tableNumber },
-  })
-  .promise();
+ return response;
+ // try {
+ //  const {
+ //   tableNumber,
+ //   clientName,
+ //   phoneNumber,
+ //   date,
+ //   slotTimeStart,
+ //   slotTimeEnd,
+ //  } = JSON.parse(event.body);
 
- return !!result.Item;
-};
+ //  const existingReservations = await docClient
+ //   .query({
+ //    TableName: RESERVATIONS_TABLE,
+ //    KeyConditionExpression:
+ //     '#tableId = :tableId and begins_with(#dateTime, :date)',
+ //    ExpressionAttributeNames: {
+ //     '#tableId': 'tableId',
+ //     '#dateTime': 'dateTime',
+ //    },
+ //    ExpressionAttributeValues: {
+ //     ':tableId': tableNumber,
+ //     ':date': date,
+ //    },
+ //   })
+ //   .promise();
 
-const checkForOverlappingReservations = async (
- tableNumber,
- date,
- slotTimeStart,
- slotTimeEnd
-) => {
- const reservations = await docClient
-  .scan({ TableName: RESERVATIONS_TABLE })
-  .promise();
+ //  const isConflict = existingReservations.Items.some((reservation) => {
+ //   const existingStart = reservation.slotTimeStart;
+ //   const existingEnd = reservation.slotTimeEnd;
+ //   return (
+ //    (slotTimeStart < existingEnd && slotTimeStart >= existingStart) ||
+ //    (slotTimeEnd > existingStart && slotTimeEnd <= existingEnd) ||
+ //    (slotTimeStart <= existingStart && slotTimeEnd >= existingEnd)
+ //   );
+ //  });
 
- const overlapping = reservations.Items.filter((reservation) => {
-  const existingDate = reservation.dateTime.split('T')[0];
-  const existingStartTime = reservation.dateTime.split('T')[1].slice(0, 5);
-  const existingEndTime = reservation.dateTime.split('T')[1].slice(0, 5);
+ //  if (isConflict) {
+ //   return {
+ //    statusCode: 400,
+ //    body: JSON.stringify({
+ //     message:
+ //      'Conflict: The requested reservation overlaps with an existing one.',
+ //    }),
+ //   };
+ //  }
 
-  return (
-   existingDate === date &&
-   ((slotTimeStart < existingEndTime && slotTimeEnd > existingStartTime) ||
-    (existingStartTime < slotTimeEnd && existingEndTime > slotTimeStart))
-  );
- });
+ //  const reservationId = uuidv4();
 
- return overlapping;
+ //  const params = {
+ //   TableName: RESERVATIONS_TABLE,
+ //   Item: {
+ //    id: reservationId,
+ //    tableId: tableNumber,
+ //    userId: clientName,
+ //    phoneNumber,
+ //    dateTime: ${date}T${slotTimeStart},
+ //   },
+ //  };
+
+ //  await docClient.put(params).promise();
+
+ //  return {
+ //   statusCode: 200,
+ //   body: JSON.stringify({ reservationId: params.Item.id }),
+ //  };
+ // } catch (error) {
+ //  console.error('Error creating reservation:', error);
+ //  return {
+ //   statusCode: 400,
+ //   body: JSON.stringify({ message: 'Error creating reservation.' }),
+ //  };
+ // }
 };
