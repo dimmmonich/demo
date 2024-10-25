@@ -1,12 +1,13 @@
 const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
+const moment = require('moment');
 // const jwt = require('jsonwebtoken');
 const cognito = new AWS.CognitoIdentityServiceProvider();
 const docClient = new AWS.DynamoDB.DocumentClient();
 
 const USER_POOL_ID = process.env.cup_id;
-const TABLES_TABLE = 'cmtr-d49b0e2c-Tables-test';
-const RESERVATIONS_TABLE = 'cmtr-d49b0e2c-Reservations-test';
+const TABLES_TABLE = 'cmtr-da5bf8a7-Tables-test';
+const RESERVATIONS_TABLE = 'cmtr-da5bf8a7-Reservations-test';
 const CLIENT_ID = process.env.cup_client_id;
 
 // const isAuthenticated = async (event) => {
@@ -24,7 +25,7 @@ const CLIENT_ID = process.env.cup_client_id;
 
 const validatePassword = (password) => {
  const passwordRegex =
-  /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$%^*-_.])[A-Za-z\d$%^*-_.]{12,}$/;
+     /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$%^*-_.])[A-Za-z\d$%^*-_.]{12,}$/;
  return passwordRegex.test(password);
 };
 
@@ -162,7 +163,7 @@ const handleSignUp = async (event) => {
   await cognito.adminConfirmSignUp(confirmParams).promise();
 
 
-return {
+  return {
    statusCode: 200,
    headers: {
     'Content-Type': 'application/json',
@@ -190,123 +191,194 @@ return {
 
 const getTables = async () => {
  const tables = await docClient.scan({ TableName: TABLES_TABLE }).promise();
+ // const formattedTables = tables.Items.map((item) => ({
+ //  ...item,
+ //  id: Number(item.id),
+ // }));
 
  return {
   statusCode: 200,
   body: JSON.stringify({
    tables: tables.Items.map((table) => ({
     ...table,
-    id: parseInt(table.id), // Перетворення ID на числовий формат
+    id: parseInt(table.id),
    })),
   }),
  };
 };
 
 const createTable = async (event) => {
- const { id, number, places, isVip, minOrder } = JSON.parse(event.body);
-
- // Перевірка, чи вже існує таблиця з даним ID
- const checkParams = {
-  TableName: TABLES_TABLE,
-  Key: {
-   id: id.toString(),
-  },
- };
-
- const existingTable = await docClient.get(checkParams).promise();
-
- if (existingTable.Item) {
-  return {
-   statusCode: 400,
-   body: JSON.stringify({ error: 'Table ID already exists.' }),
-  };
- }
-
- const params = {
-  TableName: TABLES_TABLE,
-  Item: {
-   id: id.toString(),
-   number,
-   places,
-   isVip,
-   minOrder,
-  },
- };
-
- await docClient.put(params).promise();
-
- console.log('New Table Created with ID:', id);
-
- return {
+ const response = {
   statusCode: 200,
-  body: JSON.stringify({ id: id }),
+  headers: { 'Content-Type': 'application/json' },
+  body: '',
  };
-};
-const getTableById = async (event) => {
- // Extract tableId from the path parameters
- const tableId = event.pathParameters.id;
- console.log('Received Table ID:', tableId);
-
- // Check if tableId is valid
- if (!tableId) {
-  return {
-   statusCode: 400,
-   body: JSON.stringify({
-    message: 'Bad Request: Invalid table ID format.',
-   }),
-  };
- }
-
- // Parameters for DynamoDB query
- const params = {
-  TableName: TABLES_TABLE,  // DynamoDB table name from environment variables
-  Key: { id: tableId },  // Use tableId as the key
- };
-
- console.log('DynamoDB Query Parameters:', params);
 
  try {
-  // Execute the getItem query to DynamoDB
-  const result = await docClient.get(params).promise();
-  console.log('DynamoDB Result:', result);
+  const body = JSON.parse(event.body);
 
-  // If the table is not found
-  if (!result.Item) {
-   return {
-    statusCode: 404,
-    body: JSON.stringify({ message: 'Table not found' }),
-   };
-  }
-
-  // Build the response data based on the DynamoDB result
-  const tableData = {
-   id: parseInt(result.Item.id),             // Convert id to integer
-   number: parseInt(result.Item.number),     // Convert number to integer
-   places: parseInt(result.Item.places),     // Convert places to integer
-   isVip: result.Item.isVip,                 // Boolean value
+  const item = {
+   id: String(body.id),
+   number: parseInt(body.number, 10),
+   places: parseInt(body.places, 10),
+   isVip: Boolean(body.isVip),
   };
 
-  // Check if minOrder exists and add it to the response if present
-  if (result.Item.minOrder) {
-   tableData.minOrder = parseInt(result.Item.minOrder);  // Convert minOrder to integer
+  if (body.minOrder !== undefined && body.minOrder !== null) {
+   item.minOrder = parseInt(body.minOrder, 10);
   }
 
-  // Return a successful response
-  return {
-   statusCode: 200,
-   body: JSON.stringify(tableData),
+  const params = {
+   TableName: TABLES_TABLE,
+   Item: item,
   };
 
+  await docClient.put(params).promise();
+
+  response.body = JSON.stringify({ id: body.id });
  } catch (error) {
-  console.error('DynamoDB Error:', error);
-
-  // Return a 500 response in case of an error
-  return {
-   statusCode: 500,
-   body: JSON.stringify({ message: 'Internal Server Error' }),
-  };
+  console.error('Error inserting item into DynamoDB:', error);
+  response.statusCode = 400;
+  response.body = JSON.stringify({ error: 'Internal Server Error' });
  }
+
+ return response;
+ // const { id, number, places, isVip, minOrder } = JSON.parse(event.body);
+
+ // const existingTables = await docClient
+ //  .scan({ TableName: TABLES_TABLE })
+ //  .promise();
+ // const existingIds = existingTables.Items.map((item) => parseInt(item.id, 10));
+
+ // console.log('Existing IDs:', existingIds);
+
+ // if (existingIds.includes(id)) {
+ //  return {
+ //   statusCode: 400,
+ //   body: JSON.stringify({ error: 'Table ID already exists.' }),
+ //  };
+ // }
+
+ // const params = {
+ //  TableName: TABLES_TABLE,
+ //  Item: {
+ //   id: id.toString(),
+ //   number,
+ //   places,
+ //   isVip,
+ //   minOrder,
+ //  },
+ // };
+
+ // await docClient.put(params).promise();
+
+ // console.log('Existing IDs:', existingIds);
+ // console.log('New Table ID to be assigned:', id);
+
+ // return {
+ //  statusCode: 200,
+ //  body: JSON.stringify({ id: id }),
+ // };
 };
+
+const getTableById = async (event) => {
+ const response = {
+  statusCode: 200,
+  headers: { 'Content-Type': 'application/json' },
+  body: '',
+ };
+
+ try {
+  const tableId = event.pathParameters.tableId;
+
+  const getParams = {
+   TableName: TABLES_TABLE,
+   Key: {
+    id: tableId,
+   },
+  };
+
+  const result = await docClient.get(getParams).promise();
+
+  if (!result.Item) {
+   response.statusCode = 404;
+   response.body = JSON.stringify({ error: 'Table not found' });
+   return response;
+  }
+
+  const tableData = {
+   id: parseInt(result.Item.id, 10),
+   number: parseInt(result.Item.number, 10),
+   places: parseInt(result.Item.places, 10),
+   isVip: result.Item.isVip,
+  };
+
+  if (result.Item.minOrder) {
+   tableData.minOrder = parseInt(result.Item.minOrder, 10);
+  }
+
+  response.body = JSON.stringify(tableData);
+ } catch (error) {
+  console.error('Error retrieving table:', error);
+  response.statusCode = 500;
+  response.body = JSON.stringify({ error: 'Internal Server Error' });
+ }
+
+
+ return response;
+ // console.log('Received Event:', JSON.stringify(event, null, 2));
+ // if (!event.pathParameters || !event.pathParameters.id) {
+ //  console.log('Missing table ID in pathParameters.');
+ //  return {
+ //   statusCode: 400,
+ //   body: JSON.stringify({
+ //    message: 'Bad Request: Missing or invalid table ID.',
+ //   }),
+ //  };
+ // }
+ // const tableId = event.pathParameters.id;
+ // console.log('Table ID extracted:', tableId);
+ // if (!/^\d+$/.test(tableId)) {
+ //  console.log('Invalid table ID format:', tableId);
+ //  return {
+ //   statusCode: 400,
+ //   body: JSON.stringify({
+ //    message: 'Bad Request: Invalid table ID format.',
+ //   }),
+ //  };
+ // }
+ // const params = {
+ //  TableName: TABLES_TABLE,
+ //  Key: {
+ //   id: tableId,
+ //  },
+ // };
+ // console.log('DynamoDB Query Parameters:', JSON.stringify(params, null, 2));
+ // try {
+ //  console.log('Making request to DynamoDB...');
+ //  const result = await docClient.get(params).promise();
+ //  console.log('DynamoDB Result:', JSON.stringify(result, null, 2));
+ //  if (!result.Item) {
+ //   console.log('No table found with ID:', tableId);
+ //   return {
+ //    statusCode: 404,
+ //    body: JSON.stringify({ message: 'Not Found' }),
+ //   };
+ //  }
+ //  console.log('Table found, returning result.');
+ //  return {
+ //   statusCode: 200,
+ //   body: JSON.stringify(result.Item),
+ //  };
+ // } catch (error) {
+ //  console.error('DynamoDB Error:', error);
+ //  return {
+ //   statusCode: 500,
+ //   body: JSON.stringify({ message: 'Internal Server Error' }),
+ //  };
+ // }
+};
+
 const getReservations = async () => {
  const response = {
   statusCode: 200,
@@ -385,6 +457,7 @@ const createReservation = async (event) => {
    response.body = JSON.stringify({ error: 'Table not found' });
    return response;
   }
+
 
   const reservationCheckParams = {
    TableName: RESERVATIONS_TABLE,
