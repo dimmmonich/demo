@@ -1,18 +1,22 @@
-const path = require('path');
+const WeatherService = require('/opt/nodejs/OpenMeteoClient');
 
-// Перевіряємо, чи виконується код в Lambda середовищі
-const OpenMeteoClient = require(
-    process.env.LAMBDA_TASK_ROOT
-        ? '/opt/nodejs/open-meteo-sdk/OpenMeteoClient'
-        : path.join(__dirname, '..', '..', 'nodejs', 'open-meteo-sdk', 'OpenMeteoClient')
-);
 
 exports.handler = async (event) => {
-    const api = new OpenMeteoClient();
-    const forecast = await api.getForecast(50.4375, 30.5);
+    try {
+        const weatherService = new WeatherService();
+        const forecast = await weatherService.getWeatherForecast();
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(forecast)
-    };
+        return {
+            statusCode: 200,
+            body: JSON.stringify(forecast),
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        };
+    } catch (error) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ message: 'Can not fetch data' }),
+        };
+    }
 };
