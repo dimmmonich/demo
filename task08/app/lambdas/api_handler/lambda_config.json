@@ -10,10 +10,14 @@
   "lambda_path": "lambdas\\api_handler",
   "dependencies": [],
   "event_sources": [],
-  "env_variables": {},
+  "env_variables": {
+
+  },
   "publish_version": true,
   "alias": "${lambdas_alias_name}",
-  "url_config": {},
+  "url_config":{
+    "auth_type": "NONE"
+  }  ,
   "ephemeral_storage": 512,
   "tags": {},
   "layers": [
