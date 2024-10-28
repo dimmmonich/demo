@@ -1,4 +1,4 @@
-const WeatherService = require('/opt/nodejs/OpenMeteoClient');
+const WeatherService = require('/opt/nodejs/node_modules/OpenMeteoClient');
 
 
 exports.handler = async (event) => {
