@@ -1,0 +1,8 @@
+{
+  "name": "open_meteo_layer",
+  "resource_type": "lambda_layer",
+  "runtimes": [
+    "nodejs20.x"
+  ],
+  "deployment_package": "open_meteo_layer.zip"
+}
