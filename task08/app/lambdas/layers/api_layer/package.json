@@ -1,7 +1,7 @@
 {
   "name": "open-meteo-sdk",
   "version": "1.0.0",
-  "main": "OpenMeteoClient.js",
+  "main": "weather.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
