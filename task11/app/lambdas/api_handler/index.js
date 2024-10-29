@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
-// const jwt = require('jsonwebtoken');
+
 const cognito = new AWS.CognitoIdentityServiceProvider();
 const docClient = new AWS.DynamoDB.DocumentClient();
 
@@ -10,18 +10,7 @@ const TABLES_TABLE = 'cmtr-d49b0e2c-Tables-test';
 const RESERVATIONS_TABLE = 'cmtr-d49b0e2c-Reservations-test';
 const CLIENT_ID = process.env.cup_client_id;
 
-// const isAuthenticated = async (event) => {
-//  const token = event.headers.Authorization;
-//  if (!token) return false;
 
-//  try {
-//   const decoded = jwt.verify(token, process.env.cup_id);
-//   return decoded;
-//  } catch (error) {
-//   console.error('Token verification failed:', error);
-//   return false;
-//  }
-// };
 
 const validatePassword = (password) => {
  const passwordRegex =
