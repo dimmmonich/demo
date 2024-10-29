@@ -17,8 +17,8 @@
   "paths": {
     "/reservations": {
       "get": {
-        "summary": "The method summary here",
-        "description": "The method description here",
+        "summary": "Get a list of reservations",
+        "description": "Shows all reservations",
         "responses": {
           "200": {
             "description": "200 response",
@@ -59,8 +59,50 @@
         }
       },
       "post": {
-        "summary": "The method summary here",
-        "description": "The method description here",
+        "summary": "Create a new reservation",
+        "description": "Allows you to reserve a table",
+        "requestBody": {
+          "description": "Reservation details",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tableNumber": {
+                    "type": "integer"
+                  },
+                  "clientName": {
+                    "type": "string"
+                  },
+                  "phoneNumber": {
+                    "type": "string"
+                  },
+                  "date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "slotTimeStart": {
+                    "type": "string",
+                    "format": "time"
+                  },
+                  "slotTimeEnd": {
+                    "type": "string",
+                    "format": "time"
+                  }
+                },
+                "required": [
+                  "tableNumber",
+                  "clientName",
+                  "phoneNumber",
+                  "date",
+                  "slotTimeStart",
+                  "slotTimeEnd"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "200 response",
@@ -151,8 +193,8 @@
     },
     "/tables": {
       "get": {
-        "summary": "The method summary here",
-        "description": "The method description here",
+        "summary": "Get a list of tables",
+        "description": "Returns a list of all available tables",
         "responses": {
           "200": {
             "description": "200 response",
@@ -193,8 +235,42 @@
         }
       },
       "post": {
-        "summary": "The method summary here",
-        "description": "The method description here",
+        "summary": "Create a new table",
+        "description": "Create a great new table",
+        "requestBody": {
+          "description": "Table details",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "number": {
+                    "type": "integer"
+                  },
+                  "places": {
+                    "type": "integer"
+                  },
+                  "isVip": {
+                    "type": "boolean"
+                  },
+                  "minOrder": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "id",
+                  "number",
+                  "places",
+                  "isVip"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "200 response",
@@ -285,8 +361,31 @@
     },
     "/signin": {
       "post": {
-        "summary": "The method summary here",
-        "description": "The method description here",
+        "summary": "Sign in a user",
+        "description": "Auth a user",
+        "requestBody": {
+          "description": "User sign-in credentials",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "200 response",
@@ -372,11 +471,40 @@
     },
     "/signup": {
       "post": {
-        "summary": "The method summary here",
-        "description": "The method description here",
+        "summary": "Sign up a new user",
+        "description": "Allows registration.",
+        "requestBody": {
+          "summary": "Register the user here",
+          "description": "User sign-up details",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username",
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "200 response",
+            "description": "Successfully registered",
             "headers": {
               "Access-Control-Allow-Origin": {
                 "schema": {
@@ -459,8 +587,8 @@
     },
     "/tables/{tableId}": {
       "get": {
-        "summary": "The method summary here",
-        "description": "The method description here",
+        "summary": "Get details of a specific table by ID",
+        "description": "shows full details of a particular table",
         "parameters": [
           {
             "name": "tableId",
