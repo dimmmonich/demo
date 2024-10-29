@@ -1,10 +1,15 @@
 {
   "name": "processor",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {},
   "author": "",
   "license": "ISC",
-  "dependencies": {}
+  "keywords": [],
+  "description": "",
+  "dependencies": {
+    "aws-sdk": "^2.1691.0",
+    "axios": "^1.7.7",
+    "uuid": "^11.0.2"
+  }
 }
