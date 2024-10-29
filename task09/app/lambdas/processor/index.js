@@ -1,57 +1,57 @@
+const AWS = require('aws-sdk');
 const axios = require('axios');
-const { DynamoDB } = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
 
-const dynamoDb = new DynamoDB.DocumentClient();
-const WEATHER_TABLE = process.env.WEATHER_TABLE; // Name of DynamoDB table set via environment variable
+// Initialize DynamoDB Document Client
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
+// Define the WeatherService class to fetch weather data
+class WeatherService {
+    async getWeatherForecast() {
+        const url = 'https://api.open-meteo.com/v1/forecast';
+
+        try {
+            const response = await axios.get(url);
+            return response.data; // Return the weather forecast data
+        } catch (error) {
+            console.error('Error fetching weather data:', error);
+            throw new Error('Failed to fetch weather data');
+        }
+    }
+}
+
+// Lambda function handler
 exports.handler = async (event) => {
     try {
-        // Fetch weather data from Open-Meteo API
-        const response = await axios.get('https://api.open-meteo.com/v1/forecast');
-        const data = response.data;
+        const weatherService = new WeatherService();
+        const forecast = await weatherService.getWeatherForecast();
 
-        // Construct item to be stored in DynamoDB
+        const id = uuidv4(); // Generate a UUID
         const item = {
-            id: uuidv4(),
-            forecast: {
-                elevation: data.elevation,
-                generationtime_ms: data.generationtime_ms,
-                hourly: {
-                    temperature_2m: data.hourly.temperature_2m,
-                    time: data.hourly.time
-                },
-                hourly_units: {
-                    temperature_2m: data.hourly_units.temperature_2m,
-                    time: data.hourly_units.time
-                },
-                latitude: data.latitude,
-                longitude: data.longitude,
-                timezone: data.timezone,
-                timezone_abbreviation: data.timezone_abbreviation,
-                utc_offset_seconds: data.utc_offset_seconds
-            }
+            id,
+            forecast: forecast // Ensure this matches your DynamoDB schema
         };
 
-        // Put item into DynamoDB table
-        await dynamoDb.put({
-            TableName: WEATHER_TABLE,
-            Item: item
-        }).promise();
+        // Put the item into DynamoDB
+        const params = {
+            TableName: process.env.target_table, // Use environment variable for table name
+            Item: item,
+        };
 
-        // Successful response
+        await dynamoDb.put(params).promise();
+
         return {
             statusCode: 200,
-            body: JSON.stringify({ message: 'Weather data stored successfully!' })
+            body: JSON.stringify(item), // Optionally return the item stored
+            headers: {
+                'Content-Type': 'application/json',
+            }
         };
-
     } catch (error) {
-        console.error('Error storing weather data:', error);
-
-        // Error response
+        console.error('Error fetching weather data or saving to DynamoDB:', error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ message: 'Failed to store weather data', error: error.message })
+            body: JSON.stringify({ message: 'Cannot fetch data' }),
         };
     }
 };
