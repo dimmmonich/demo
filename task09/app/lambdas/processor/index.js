@@ -2,71 +2,60 @@ const AWS = require('aws-sdk');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
-// Initialize DynamoDB Document Client
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
+const docClient = new AWS.DynamoDB.DocumentClient();
+const tableName = 'cmtr-d49b0e2c-Weather-test';
 
-// Define the WeatherService class to fetch weather data
-class WeatherService {
-    async getWeatherForecast() {
-        const url =' https://api.open-meteo.com/v1/forecast?latitude=50.4375&longitude=30.5&hourly=temperature_2m';
-
-        try {
-            const response = await axios.get(url);
-            return response.data; // Return the weather forecast data
-        } catch (error) {
-            console.error('Error fetching weather data:', error);
-            throw new Error('Failed to fetch weather data');
-        }
-    }
-}
-
-// Lambda function handler
 exports.handler = async (event) => {
+    const weatherApiUrl =
+        'https://api.open-meteo.com/v1/forecast?latitude=35.6895&longitude=139.6917&hourly=temperature_2m';
+
     try {
-        const weatherService = new WeatherService();
-        const forecast = await weatherService.getWeatherForecast();
-
-        // Log fetched data for debugging
-        console.log('Fetched forecast:', JSON.stringify(forecast));
-
-        // Extract latitude, longitude, and other relevant data
-        const { latitude, longitude } = forecast; // Adjust based on actual response structure
-        const generationTimeMs = forecast.generationtime_ms;
-        const id = uuidv4(); // Generate a UUID
+        const response = await axios.get(weatherApiUrl);
+        const weatherData = response.data;
 
         const item = {
-            id,
+            id: uuidv4(),
             forecast: {
-                latitude,
-                longitude,
-                generationtime_ms: generationTimeMs,
-                // Include additional required fields from forecast if needed
-                hourly: forecast.hourly // This assumes the hourly forecast is included
-            }
+                elevation: weatherData.elevation,
+                generationtime_ms: weatherData.generationtime_ms,
+                hourly: {
+                    temperature_2m: weatherData.hourly.temperature_2m,
+                    time: weatherData.hourly.time,
+                },
+                hourly_units: {
+                    temperature_2m: weatherData.hourly_units.temperature_2m,
+                    time: weatherData.hourly_units.time,
+                },
+                latitude: weatherData.latitude,
+                longitude: weatherData.longitude,
+                timezone: weatherData.timezone,
+                timezone_abbreviation: weatherData.timezone_abbreviation,
+                utc_offset_seconds: weatherData.utc_offset_seconds,
+            },
         };
 
-        console.log('Item to be stored in DynamoDB:', JSON.stringify(item)); // Log item to be stored
-
-        // Put the item into DynamoDB
         const params = {
-            TableName: process.env.target_table, // Use environment variable for table name
+            TableName: tableName,
             Item: item,
         };
 
-        await dynamoDb.put(params).promise();
+        await docClient.put(params).promise();
 
         return {
             statusCode: 200,
-            body: JSON.stringify(item), // Optionally return the item stored
-            headers: {
-                'Content-Type': 'application/json',
-            }
+            body: JSON.stringify({
+                message: 'Weather data stored successfully!',
+                item,
+            }),
         };
     } catch (error) {
-        console.error('Error fetching weather data or saving to DynamoDB:', error);
+        console.error('Error fetching weather data:', error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ message: 'Cannot fetch data' }),
+            body: JSON.stringify({
+                message: 'Failed to fetch weather data.',
+                error: error.message,
+            }),
         };
     }
 };
