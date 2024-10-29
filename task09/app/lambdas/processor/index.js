@@ -8,7 +8,7 @@ const WEATHER_TABLE = process.env.WEATHER_TABLE; // Name of DynamoDB table set v
 exports.handler = async (event) => {
     try {
         // Fetch weather data from Open-Meteo API
-        const response = await axios.get('https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current=temperature_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m');
+        const response = await axios.get('https://api.open-meteo.com/v1/forecast');
         const data = response.data;
 
         // Construct item to be stored in DynamoDB
